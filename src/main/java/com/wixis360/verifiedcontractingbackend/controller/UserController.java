@@ -7,6 +7,7 @@ import com.wixis360.verifiedcontractingbackend.service.UserFavouriteUserService;
 import com.wixis360.verifiedcontractingbackend.service.UserRatingService;
 import com.wixis360.verifiedcontractingbackend.service.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -185,5 +186,59 @@ public class UserController {
                 .results(null)
                 .build();
         return new ResponseEntity<>(responseDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @GetMapping("/rating")
+    public ResponseEntity<APIResponse> getRating(@RequestParam String projectId) {
+
+        try {
+            UserRatingDto rating = userRatingService.getRating(projectId);
+            APIResponse<UserRatingDto> responseDTO = APIResponse
+                    .<UserRatingDto>builder()
+                    .status(APIResponseStatus.SUCCESS.name())
+                    .results(rating)
+                    .build();
+            return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+        } catch (Exception e) {
+
+            if(e instanceof EmptyResultDataAccessException){
+                APIResponse<UserRatingDto> responseDTO = APIResponse
+                        .<UserRatingDto>builder()
+                        .status(APIResponseStatus.SUCCESS.name())
+                        .results(null)
+                        .build();
+                return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+            }
+
+            APIResponse<UserRatingDto> responseDTO = APIResponse
+                    .<UserRatingDto>builder()
+                    .status(APIResponseStatus.ERROR.name())
+                    .results(null)
+                    .build();
+            return new ResponseEntity<>(responseDTO, HttpStatus.BAD_REQUEST);
+
+        }
+    }
+
+    @GetMapping("/rating/average/{contractorId}")
+    public ResponseEntity<APIResponse> getAverageRateForContractor(@PathVariable String contractorId) {
+
+        try {
+            double averageRateForContractor = userRatingService.getAverageRateForContractor(contractorId);
+            APIResponse<Double> responseDTO = APIResponse
+                    .<Double>builder()
+                    .status(APIResponseStatus.SUCCESS.name())
+                    .results(averageRateForContractor)
+                    .build();
+            return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+        } catch (Exception e) {
+            APIResponse<UserRatingDto> responseDTO = APIResponse
+                    .<UserRatingDto>builder()
+                    .status(APIResponseStatus.ERROR.name())
+                    .results(null)
+                    .build();
+            return new ResponseEntity<>(responseDTO, HttpStatus.BAD_REQUEST);
+
+        }
     }
 }

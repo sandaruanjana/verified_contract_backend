@@ -21,9 +21,29 @@ public class UserRatingServiceImpl implements UserRatingService {
 
     @Override
     public boolean save(UserRatingDto userRatingDto) {
-        userRatingDto.setId(UUID.randomUUID().toString());
+        userRatingDto.setId(UUID.randomUUID().toString().replace("-",""));
         userRatingDto.setCreatedTime(new Date());
         return userRatingDao.save(getUserRating(userRatingDto)) > 0;
+    }
+
+    @Override
+    public UserRatingDto getRating(String projectId) {
+        return userRatingDao.getRating(projectId);
+    }
+
+    @Override
+    public double getAverageRateForContractor(String contractorId) {
+
+        double rating = 0.0;
+
+        try {
+           rating = userRatingDao.getAverageRateForContractor(contractorId);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        return Math.round(rating * 100.0) / 100.0;
     }
 
     private UserRating getUserRating(UserRatingDto userRatingDto) {
