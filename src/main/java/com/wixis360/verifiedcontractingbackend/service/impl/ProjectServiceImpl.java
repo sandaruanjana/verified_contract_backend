@@ -49,10 +49,17 @@ public class ProjectServiceImpl implements ProjectService {
         projectDto.setId(UUID.randomUUID().toString());
         projectDto.setCreatedTime(new Date());
 
+        ProjectBid projectBid = new ProjectBid();
+
         if (projectDto.getAssignUserId() != null) {
             Optional<User> optionalUser = userDao.findById(projectDto.getAssignUserId());
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
+                projectBid.setId(UUID.randomUUID().toString());
+                projectBid.setProjectId(projectDto.getId());
+                projectBid.setUserId(user.getId());
+                projectBid.setAmount(projectDto.getBidAmount());
+                projectBid.setCreatedTime(new Date());
                 emailService.sendPlain(user.getEmail(), "Verified Contracting - New Project", "You have a new project to work on. Please check your my projects section.");
             }
         }
@@ -60,6 +67,10 @@ public class ProjectServiceImpl implements ProjectService {
         int isProjectSaved = projectDao.save(getProject(projectDto));
 
         if (isProjectSaved > 0) {
+            if (projectDto.getAssignUserId() != null) {
+                projectBidDao.save(projectBid);
+            }
+
             List<ProjectImageDto> projectImageDtoList = projectDto.getImages();
 
             if (projectImageDtoList != null) {
@@ -161,6 +172,11 @@ public class ProjectServiceImpl implements ProjectService {
         List<ProjectDto> projectDtoList = StreamSupport.stream(projectPage.spliterator(), false)
                 .map(this::getProjectDto)
                 .collect(Collectors.toList());
+
+        Optional<ProjectBid> bid = projectBidDao.findByProjectIdAndUserId(projectDtoList.get(0).getId(), assignUserId);
+
+        bid.ifPresent(projectBid -> projectDtoList.get(0).setBidAmount(projectBid.getAmount()));
+
         return new PageImpl<>(projectDtoList, page, projectPage.getTotalElements());
     }
 
